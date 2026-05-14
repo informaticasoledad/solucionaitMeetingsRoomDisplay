@@ -1,0 +1,12 @@
+services:
+  app:
+    build: .
+    ports:
+      - "8080:8080"
+    volumes:
+      - meetingroom-data:/app/data
+    environment:
+      - ConnectionStrings__Default=Data Source=/app/data/meetingrooms.db
+
+volumes:
+  meetingroom-data:

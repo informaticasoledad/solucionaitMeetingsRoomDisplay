@@ -1,0 +1,10 @@
+**/node_modules/
+**/bin/
+**/obj/
+**/.git/
+**/.vs/
+**/.vscode/
+**/dist/
+*.db
+.env
+.DS_Store
