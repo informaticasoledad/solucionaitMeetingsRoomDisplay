@@ -7,6 +7,11 @@ export const routes: Routes = [
       import('./features/kiosk/kiosk.component').then((m) => m.KioskComponent),
   },
   {
+    path: 'kiosk',
+    loadComponent: () =>
+      import('./features/kiosk/kiosk.component').then((m) => m.KioskComponent),
+  },
+  {
     path: 'admin',
     loadComponent: () =>
       import('./features/admin/admin.component').then((m) => m.AdminComponent),

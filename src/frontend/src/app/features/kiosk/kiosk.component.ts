@@ -42,8 +42,8 @@ import { FormsModule } from '@angular/forms';
             <span [class]="'text-caption tracking-wider ' + dotColor(s.status)">{{ statusLabel(s.status) }}</span>
           </div>
           <div style="position:absolute;bottom:48px;left:50%;transform:translateX(-50%);">
-            <button class="p-2 rounded-full transition btn-hover-primary">
-              <span class="material-symbols-outlined opacity-50" style="color:var(--text-secondary);">info</span>
+            <button (click)="openAssociateModal()" class="p-2 rounded-full transition btn-hover-primary" title="Asociar sala">
+              <span class="material-symbols-outlined opacity-50" style="color:var(--text-secondary);">link</span>
             </button>
           </div>
         </div>
@@ -140,7 +140,7 @@ import { FormsModule } from '@angular/forms';
             <div class="not-found-icon"><span class="material-symbols-outlined text-error" style="font-size:56px;">door_back</span></div>
             <h2 class="text-headline-sm mb-3">Sala no encontrada</h2>
             <p class="text-body text-secondary" style="line-height:1.6;">El identificador <span class="text-error text-mono">{{ roomId }}</span> no existe o no está configurado.</p>
-            <p class="text-body-sm text-secondary mt-4">Contacta con el administrador o verifica la URL.</p>
+            <button (click)="openAssociateModal()" class="btn btn-primary btn-lg shadow-primary mt-8">Asociar sala</button>
           </div>
         </div>
       </div>
@@ -163,6 +163,101 @@ import { FormsModule } from '@angular/forms';
         </div>
       </div>
     }
+
+    @if (showAssociateModal) {
+      <div class="modal-backdrop">
+        <div class="modal" (click)="$event.stopPropagation()">
+          <div class="modal-header">
+            <div class="flex items-center gap">
+              <span class="material-symbols-outlined fill text-primary" style="font-size:40px;">link</span>
+              <h2 class="text-headline-sm">Asociar sala</h2>
+            </div>
+            <button (click)="closeAssociateModal()" class="btn-icon-sm">
+              <span class="material-symbols-outlined text-secondary" style="font-size:32px;">close</span>
+            </button>
+          </div>
+
+          @if (associateStep() === 'pin') {
+            <div class="flex flex-col gap-xl">
+              <p class="text-body text-secondary" style="line-height:1.6;">Introduce el PIN de 6 dígitos para autorizar la asociación de una sala a este kiosko.</p>
+              <div>
+                <label class="form-label">PIN de administración</label>
+                <div class="relative">
+                  <span class="form-input-icon material-symbols-outlined">lock</span>
+                  <input
+                    type="password"
+                    [(ngModel)]="pinInput"
+                    placeholder="••••••"
+                    maxlength="6"
+                    inputmode="numeric"
+                    pattern="[0-9]*"
+                    class="form-input form-input-pl text-center text-headline tracking-widest"
+                    (keyup.enter)="submitPin()"
+                    style="letter-spacing:0.3em;font-family:var(--font-display);"
+                  >
+                </div>
+              </div>
+              @if (pinError()) { <p class="text-body-sm text-error text-center">{{ pinError() }}</p> }
+              @if (pinValidating()) {
+                <p class="text-body-sm text-secondary text-center flex items-center justify-center gap">
+                  <span class="material-symbols-outlined animate-spin">progress_activity</span> Verificando…
+                </p>
+              }
+              <div class="flex gap pt-4">
+                <button (click)="closeAssociateModal()" class="btn btn-ghost flex-1">Cancelar</button>
+                <button (click)="submitPin()" [disabled]="pinInput.length !== 6 || pinValidating()" class="btn btn-primary flex-1 shadow-primary">
+                  <span class="material-symbols-outlined">arrow_forward</span> Continuar
+                </button>
+              </div>
+            </div>
+          }
+
+          @if (associateStep() === 'room') {
+            <div class="flex flex-col gap-xl">
+              <p class="text-body text-secondary" style="line-height:1.6;">Introduce el identificador de la sala que quieres vincular a este kiosko.</p>
+              <div>
+                <label class="form-label">ID de la sala</label>
+                <div class="relative">
+                  <span class="form-input-icon material-symbols-outlined">meeting_room</span>
+                  <input
+                    type="text"
+                    [(ngModel)]="roomIdInput"
+                    placeholder="Ej: sala-reuniones-1"
+                    class="form-input form-input-pl"
+                    (keyup.enter)="submitRoomId()"
+                  >
+                </div>
+              </div>
+              @if (roomError()) { <p class="text-body-sm text-error text-center">{{ roomError() }}</p> }
+              @if (roomValidating()) {
+                <p class="text-body-sm text-secondary text-center flex items-center justify-center gap">
+                  <span class="material-symbols-outlined animate-spin">progress_activity</span> Verificando sala…
+                </p>
+              }
+              <div class="flex gap pt-4">
+                <button (click)="closeAssociateModal()" class="btn btn-ghost flex-1">Cancelar</button>
+                <button (click)="submitRoomId()" [disabled]="!roomIdInput.trim() || roomValidating()" class="btn btn-primary flex-1 shadow-primary">
+                  <span class="material-symbols-outlined">check</span> Vincular sala
+                </button>
+              </div>
+            </div>
+          }
+
+          @if (associateStep() === 'success') {
+            <div class="flex flex-col items-center gap-xl py-20">
+              <div class="flex items-center justify-center w-24 h-24 rounded-full bg-primary-20">
+                <span class="material-symbols-outlined fill text-primary" style="font-size:48px;">check_circle</span>
+              </div>
+              <div class="text-center">
+                <h3 class="text-headline-sm mb-2">Sala vinculada</h3>
+                <p class="text-body text-secondary">El kiosko mostrará automáticamente esta sala al abrirse.</p>
+              </div>
+              <button (click)="closeAssociateModalAndReload()" class="btn btn-primary btn-lg shadow-primary" style="width:280px;">Aceptar</button>
+            </div>
+          }
+        </div>
+      </div>
+    }
   `,
 })
 export class KioskComponent implements OnDestroy {
@@ -172,6 +267,16 @@ export class KioskComponent implements OnDestroy {
   showBookingModal = false; bookingDuration = 30; bookingDate = ''; bookingStartTime = ''; bookingOrganizer = ''; bookingTitle = ''; bookingError = '';
   readonly durationPresets = [15, 30, 45, 60, 90];
   private clockTimer: any; private pollTimer: any;
+
+  showAssociateModal = false;
+  associateStep = signal<'pin' | 'room' | 'success'>('pin');
+  pinInput = '';
+  roomIdInput = '';
+  pinError = signal('');
+  roomError = signal('');
+  pinValidating = signal(false);
+  roomValidating = signal(false);
+  private validatedPin = '';
 
   hourAngle = computed(() => ((this.now().getHours() % 12) * 30) + (this.now().getMinutes() * 0.5));
   minuteAngle = computed(() => this.now().getMinutes() * 6);
@@ -214,9 +319,46 @@ export class KioskComponent implements OnDestroy {
     return slots;
   });
 
-  constructor() { this.roomId = this.route.snapshot.paramMap.get('roomId') ?? ''; this.load(this.roomId); this.clockTimer = setInterval(() => this.now.set(new Date()), 1000); }
+  constructor() {
+    const routeId = this.route.snapshot.paramMap.get('roomId') ?? '';
 
-  private load(id: string) { this.loading.set(true); this.notFound.set(false); this.roomsService.getRoomStatus(id).subscribe({ next: s => { this.status.set(s); this.loading.set(false); clearInterval(this.pollTimer); this.pollTimer = setInterval(() => this.load(this.roomId), 30000); }, error: () => { this.loading.set(false); this.notFound.set(true); this.status.set(null); } }); }
+    if (routeId) {
+      this.roomId = routeId;
+    } else {
+      const stored = localStorage.getItem('kioskRoomId');
+      if (stored) {
+        this.roomId = stored;
+      }
+    }
+
+    if (this.roomId) {
+      this.load(this.roomId);
+    } else {
+      this.loading.set(false);
+      this.notFound.set(true);
+    }
+
+    this.clockTimer = setInterval(() => this.now.set(new Date()), 1000);
+  }
+
+  private load(id: string) {
+    this.loading.set(true);
+    this.notFound.set(false);
+    this.roomId = id;
+    this.roomsService.getRoomStatus(id).subscribe({
+      next: s => {
+        this.status.set(s);
+        this.loading.set(false);
+        clearInterval(this.pollTimer);
+        this.pollTimer = setInterval(() => this.load(this.roomId), 30000);
+      },
+      error: () => {
+        this.loading.set(false);
+        this.notFound.set(true);
+        this.status.set(null);
+      }
+    });
+  }
 
   statusLabel = (s: string) => ({ Free: 'Disponible', BusySoon: 'Próximamente', Occupied: 'Reservado' } as any)[s] ?? s;
   dotColor = (s: string) => ({ Free: 'bg-primary shadow-primary', BusySoon: 'bg-warning', Occupied: 'bg-error shadow-error' } as any)[s] ?? '';
@@ -246,6 +388,76 @@ export class KioskComponent implements OnDestroy {
     this.reserving.set(true);
     this.roomsService.quickReserve({ roomId:rid, durationMinutes:this.bookingDuration, title:this.bookingTitle||'', organizerName:this.bookingOrganizer||'', startTime:st.toISOString() })
       .subscribe({ next: () => { this.reserving.set(false); this.showBookingModal = false; this.load(rid); }, error: e => { this.reserving.set(false); this.bookingError = e?.error?.error || 'Error al realizar la reserva.'; } });
+  }
+
+  openAssociateModal() {
+    this.showAssociateModal = true;
+    this.associateStep.set('pin');
+    this.pinInput = '';
+    this.roomIdInput = '';
+    this.pinError.set('');
+    this.roomError.set('');
+    this.pinValidating.set(false);
+    this.roomValidating.set(false);
+    this.validatedPin = '';
+  }
+
+  closeAssociateModal() {
+    this.showAssociateModal = false;
+  }
+
+  closeAssociateModalAndReload() {
+    this.showAssociateModal = false;
+    if (this.roomId) {
+      this.load(this.roomId);
+    }
+  }
+
+  submitPin() {
+    if (this.pinInput.length !== 6) return;
+    this.pinError.set('');
+    this.pinValidating.set(true);
+
+    this.roomsService.validatePin(this.pinInput).subscribe({
+      next: () => {
+        this.pinValidating.set(false);
+        this.validatedPin = this.pinInput;
+        this.associateStep.set('room');
+        this.pinError.set('');
+      },
+      error: () => {
+        this.pinValidating.set(false);
+        this.pinError.set('PIN incorrecto. Inténtalo de nuevo.');
+      }
+    });
+  }
+
+  submitRoomId() {
+    const id = this.roomIdInput.trim();
+    if (!id || !this.validatedPin) return;
+
+    this.roomError.set('');
+    this.roomValidating.set(true);
+
+    this.roomsService.validateRoom(this.validatedPin, id).subscribe({
+      next: () => {
+        this.roomValidating.set(false);
+        localStorage.setItem('kioskRoomId', id);
+        this.roomId = id;
+        this.associateStep.set('success');
+      },
+      error: (err) => {
+        this.roomValidating.set(false);
+        if (err.status === 404) {
+          this.roomError.set('No se encontró ninguna sala con ese ID.');
+        } else if (err.status === 401) {
+          this.roomError.set('PIN no válido. Vuelve a intentarlo.');
+          this.associateStep.set('pin');
+        } else {
+          this.roomError.set('Error al verificar la sala. Inténtalo de nuevo.');
+        }
+      }
+    });
   }
 
   ngOnDestroy() { clearInterval(this.clockTimer); clearInterval(this.pollTimer); }

@@ -40,5 +40,8 @@ export class RoomsService {
 
   createMeeting(request: CreateMeetingRequest) { return this.http.post<LocalMeeting>(`${this.base}/meetings`, request); }
   deleteMeeting(id: string) { return this.http.delete<void>(`${this.base}/meetings/${id}`); }
+
+  validatePin(pin: string) { return this.http.post<{ valid: boolean }>(`${this.base}/kiosk/validate-pin`, { pin }); }
+  validateRoom(pin: string, roomId: string) { return this.http.post<{ valid: boolean; room?: { id: string; name: string; capacity: number } }>(`${this.base}/kiosk/validate-room`, { pin, roomId }); }
 }
 
