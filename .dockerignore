@@ -5,6 +5,7 @@
 **/.vs/
 **/.vscode/
 **/dist/
+**/.angular/
 *.db
 .env
 .DS_Store
