@@ -79,8 +79,24 @@ import { RouterLink } from '@angular/router';
                        style="cursor:not-allowed;" readonly
                        placeholder="Usa el código de sala automáticamente" />
                 <p class="text-body-xs text-secondary mt-1">Para salas locales se usa el código de sala como Calendar ID automáticamente.</p>
-              } @else if (isICalProvider()) {
-                <input formControlName="calendarId" placeholder="https://calendar.google.com/calendar/ical/XXXX/basic.ics" class="form-input" />
+              }               @else if (isICalProvider()) {
+                <div class="flex gap-sm items-start">
+                  <input formControlName="calendarId" placeholder="https://calendar.google.com/calendar/ical/XXXX/basic.ics" class="form-input flex-1" />
+                  <button type="button" (click)="testICalUrl()" [disabled]="icalTesting() || !form.get('calendarId')?.value" class="btn btn-outline" style="padding:14px 20px;white-space:nowrap;">
+                    @if (icalTesting()) {
+                      <span class="material-symbols-outlined animate-spin">progress_activity</span>
+                    } @else {
+                      <span class="material-symbols-outlined">network_check</span>
+                    }
+                    Probar
+                  </button>
+                </div>
+                @if (icalTestResult(); as result) {
+                  <div [class]="'feedback mt-2 ' + (result.valid ? 'feedback-success' : 'feedback-error')">
+                    <span class="material-symbols-outlined flex-shrink-0" style="font-size:20px;" [class.text-primary]="result.valid" [class.text-error]="!result.valid">{{ result.valid ? 'check_circle' : 'error' }}</span>
+                    <p class="text-body-sm" [class.text-primary]="result.valid" [class.text-error]="!result.valid">{{ result.message }}</p>
+                  </div>
+                }
                 <p class="text-body-xs text-secondary mt-1">URL del archivo .ics del calendario. Cada sala debe tener su propia URL.</p>
               } @else if (isCalDavProvider()) {
                 <input formControlName="calendarId" placeholder="ej: calendars/usuario/sala-reuniones" class="form-input" />
@@ -154,6 +170,8 @@ export class RoomsPageComponent implements OnInit {
   isLocalProvider = computed(() => this.selectedProvider() === 'Local');
   isICalProvider = computed(() => this.selectedProvider() === 'ICal');
   isCalDavProvider = computed(() => this.selectedProvider() === 'CalDav');
+  icalTesting = signal(false);
+  icalTestResult = signal<{ valid: boolean; message: string } | null>(null);
 
   form: FormGroup = this.fb.group({
     id: ['', [Validators.required, Validators.maxLength(8), Validators.pattern(/^[A-Za-z0-9]+$/)]],
@@ -175,6 +193,8 @@ export class RoomsPageComponent implements OnInit {
 
   toggleForm() {
     this.showForm = !this.showForm;
+    this.icalTesting.set(false);
+    this.icalTestResult.set(null);
     if (!this.showForm) {
       this.editingId = null;
       this.form.reset({ id: '', name: '', capacity: 1, clockMode: 'Digital', provider: 'Google', calendarId: '' });
@@ -226,6 +246,17 @@ export class RoomsPageComponent implements OnInit {
     const o = this.editingId ? this.roomsService.updateRoom(this.editingId, r) : this.roomsService.createRoom(r);
     o.subscribe(() => { this.load(); this.toggleForm(); });
   }
-  edit(room: Room) { this.editingId = room.id; this.form.patchValue({ ...room, id: room.id }); this.selectedProvider.set(room.provider); this.showForm = true; this.updateCalendarIdValidator(); }
+  edit(room: Room) { this.editingId = room.id; this.form.patchValue({ ...room, id: room.id }); this.selectedProvider.set(room.provider); this.showForm = true; this.updateCalendarIdValidator(); this.icalTesting.set(false); this.icalTestResult.set(null); }
   remove(id: string) { this.roomsService.deleteRoom(id).subscribe(() => this.load()); }
+
+  testICalUrl() {
+    const url = this.form.get('calendarId')?.value;
+    if (!url) return;
+    this.icalTesting.set(true);
+    this.icalTestResult.set(null);
+    this.roomsService.testICalUrl(url).subscribe({
+      next: r => { this.icalTesting.set(false); this.icalTestResult.set({ valid: r.valid, message: r.valid ? r.message : (r.message || 'Error desconocido') }); },
+      error: () => { this.icalTesting.set(false); this.icalTestResult.set({ valid: false, message: 'Error al conectar con el servidor.' }); }
+    });
+  }
 }

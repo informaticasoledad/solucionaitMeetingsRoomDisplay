@@ -43,5 +43,7 @@ export class RoomsService {
 
   validatePin(pin: string) { return this.http.post<{ valid: boolean }>(`${this.base}/kiosk/validate-pin`, { pin }); }
   validateRoom(pin: string, roomId: string) { return this.http.post<{ valid: boolean; room?: { id: string; name: string; capacity: number } }>(`${this.base}/kiosk/validate-room`, { pin, roomId }); }
+
+  testICalUrl(url: string) { return this.http.post<{ valid: boolean; message: string; eventCount: number }>(`${this.base}/rooms/test-ical-url`, { url }); }
 }
 
