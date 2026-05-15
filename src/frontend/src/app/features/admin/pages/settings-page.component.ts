@@ -48,6 +48,18 @@ import { FormsModule } from '@angular/forms';
                 @if (uploading()) { <span class="material-symbols-outlined animate-spin">progress_activity</span> Configurando… }
                 @else { <span class="material-symbols-outlined">cloud_upload</span> Guardar Credenciales }
               </button>
+              @if (selectedProvider === 'CalDav') {
+                <button (click)="testCalDavConnection(credentials.value)" [disabled]="caldavTesting() || !credentials.value" class="btn btn-outline btn-block mt-2">
+                  @if (caldavTesting()) { <span class="material-symbols-outlined animate-spin">progress_activity</span> Probando… }
+                  @else { <span class="material-symbols-outlined">network_check</span> Probar conexión }
+                </button>
+                @if (caldavTestResult(); as result) {
+                  <div [class]="'feedback mt-2 ' + (result.valid ? 'feedback-success' : 'feedback-error')">
+                    <span class="material-symbols-outlined flex-shrink-0" style="font-size:20px;" [class.text-primary]="result.valid" [class.text-error]="!result.valid">{{ result.valid ? 'check_circle' : 'error' }}</span>
+                    <p class="text-body-sm" [class.text-primary]="result.valid" [class.text-error]="!result.valid">{{ result.message }}</p>
+                  </div>
+                }
+              }
             } @else {
               <div class="info-box">
                 <span class="material-symbols-outlined text-primary flex-shrink-0" style="font-size:20px;">check_circle</span>
@@ -94,6 +106,8 @@ import { FormsModule } from '@angular/forms';
 export class SettingsPageComponent {
   private roomsService = inject(RoomsService);
   selectedProvider = 'Google'; uploading = signal(false); syncing = signal(false); message = signal(''); error = signal(false); syncMessage = signal('');
+  caldavTesting = signal(false);
+  caldavTestResult = signal<{ valid: boolean; message: string } | null>(null);
 
   providers = [
     { value: 'Google', label: 'Google', icon: 'cloud', color: 'text-blue' },
@@ -112,7 +126,34 @@ export class SettingsPageComponent {
   };
 
   exampleJson = signal(this.examples['Google']);
-  selectProvider(p: string) { this.selectedProvider = p; this.exampleJson.set(this.examples[p] ?? ''); }
+  selectProvider(p: string) { this.selectedProvider = p; this.exampleJson.set(this.examples[p] ?? ''); this.caldavTestResult.set(null); }
   upload(j: string) { this.uploading.set(true); this.message.set(''); this.error.set(false); this.roomsService.setCredentials(j, this.selectedProvider).subscribe({ next: () => { this.message.set(`${this.selectedProvider} configurado correctamente.`); this.uploading.set(false); }, error: () => { this.message.set(`Error al configurar ${this.selectedProvider}.`); this.error.set(true); this.uploading.set(false); } }); }
   sync() { this.syncing.set(true); this.syncMessage.set(''); this.roomsService.syncCalendars().subscribe({ next: () => { this.syncMessage.set('Sincronización completada.'); this.syncing.set(false); setTimeout(() => this.syncMessage.set(''), 4000); }, error: () => this.syncing.set(false) }); }
+
+  testCalDavConnection(json: string) {
+    if (!json) return;
+    this.caldavTesting.set(true);
+    this.caldavTestResult.set(null);
+
+    try {
+      const creds = JSON.parse(json);
+      this.roomsService.testCalDav({
+        url: creds.url || '',
+        username: creds.username || '',
+        password: creds.password || '',
+      }).subscribe({
+        next: r => {
+          this.caldavTesting.set(false);
+          this.caldavTestResult.set({ valid: r.valid, message: r.message });
+        },
+        error: () => {
+          this.caldavTesting.set(false);
+          this.caldavTestResult.set({ valid: false, message: 'Error al conectar con el servidor.' });
+        }
+      });
+    } catch {
+      this.caldavTesting.set(false);
+      this.caldavTestResult.set({ valid: false, message: 'JSON inválido. Revisa el formato.' });
+    }
+  }
 }
