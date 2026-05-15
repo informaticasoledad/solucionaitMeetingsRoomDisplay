@@ -99,6 +99,8 @@ export class SettingsPageComponent {
     { value: 'Google', label: 'Google', icon: 'cloud', color: 'text-blue' },
     { value: 'Office365', label: 'Office 365', icon: 'cloud_sync', color: 'text-orange' },
     { value: 'Zoho', label: 'Zoho', icon: 'cloud_done', color: 'text-purple' },
+    { value: 'CalDav', label: 'CalDAV', icon: 'folder_shared', color: 'text-teal' },
+    { value: 'ICal', label: 'iCal', icon: 'event_note', color: 'text-lime' },
     { value: 'Local', label: 'Local', icon: 'database', color: 'text-primary' },
   ];
 
@@ -106,6 +108,8 @@ export class SettingsPageComponent {
     Google: `{\n  "type": "service_account",\n  "project_id": "...",\n  "private_key_id": "...",\n  "private_key": "-----BEGIN PRIVATE KEY-----\\n...\\n-----END PRIVATE KEY-----\\n",\n  "client_email": "...@....iam.gserviceaccount.com"\n}`,
     Office365: `{\n  "clientId": "00000000-0000-0000-0000-000000000000",\n  "tenantId": "00000000-0000-0000-0000-000000000000",\n  "clientSecret": "..."\n}`,
     Zoho: `{\n  "clientId": "...",\n  "clientSecret": "...",\n  "refreshToken": "..."\n}`,
+    CalDav: `{\n  "url": "https://tudominio.com/remote.php/dav",\n  "username": "admin",\n  "password": "tu-contrasena"\n}`,
+    ICal: `{\n  "url": "https://calendar.google.com/calendar/ical/XXXX/basic.ics"\n}`,
     Local: '',
   };
 
