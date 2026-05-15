@@ -62,6 +62,7 @@ import { RouterLink } from '@angular/router';
                   <option value="Office365" class="bg-surface-high">Microsoft Office 365</option>
                   <option value="Zoho" class="bg-surface-high">Zoho Calendar</option>
                   <option value="CalDav" class="bg-surface-high">CalDAV (Nextcloud, iCloud, …)</option>
+                  <option value="ICal" class="bg-surface-high">iCal (suscripción .ics)</option>
                   <option value="Local" class="bg-surface-high">Local (BD)</option>
                 </select>
                 <span class="material-symbols-outlined">unfold_more</span>
@@ -201,8 +202,8 @@ export class RoomsPageComponent implements OnInit {
     ctrl.updateValueAndValidity();
   }
 
-  avatarClass(p: string) { return ({ Google: 'avatar-blue', Office365: 'avatar-orange', Zoho: 'avatar-purple', CalDav: 'avatar-teal' } as any)[p] ?? 'avatar-default'; }
-  badgeClass(p: string) { return ({ Google: 'badge badge-blue', Office365: 'badge badge-orange', Zoho: 'badge badge-purple', CalDav: 'badge badge-teal' } as any)[p] ?? 'badge badge-default'; }
+  avatarClass(p: string) { return ({ Google: 'avatar-blue', Office365: 'avatar-orange', Zoho: 'avatar-purple', CalDav: 'avatar-teal', ICal: 'avatar-lime' } as any)[p] ?? 'avatar-default'; }
+  badgeClass(p: string) { return ({ Google: 'badge badge-blue', Office365: 'badge badge-orange', Zoho: 'badge badge-purple', CalDav: 'badge badge-teal', ICal: 'badge badge-lime' } as any)[p] ?? 'badge badge-default'; }
 
   private load() { this.roomsService.loadRooms().subscribe(r => this.rooms.set(r)); }
   submit() {

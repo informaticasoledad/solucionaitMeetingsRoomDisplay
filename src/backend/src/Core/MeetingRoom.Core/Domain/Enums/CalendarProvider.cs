@@ -6,5 +6,6 @@ public enum CalendarProvider
     Office365 = 1,
     Zoho = 2,
     Local = 3,
-    CalDav = 4
+    CalDav = 4,
+    ICal = 5
 }
