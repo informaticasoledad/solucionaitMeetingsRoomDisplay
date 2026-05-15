@@ -69,12 +69,22 @@ import { RouterLink } from '@angular/router';
               </div>
             </div>
             <div class="col-span-2">
-              <label class="form-label"><span class="material-symbols-outlined" style="font-size:16px;">calendar_month</span> Calendar ID</label>
+              <label class="form-label"><span class="material-symbols-outlined" style="font-size:16px;">calendar_month</span>
+                @if (isICalProvider()) { URL del calendario (.ics) }
+                @else if (isCalDavProvider()) { Ruta del calendario }
+                @else { Calendar ID }
+              </label>
               @if (isLocalProvider()) {
                 <input formControlName="calendarId" class="form-input opacity-50"
                        style="cursor:not-allowed;" readonly
                        placeholder="Usa el código de sala automáticamente" />
                 <p class="text-body-xs text-secondary mt-1">Para salas locales se usa el código de sala como Calendar ID automáticamente.</p>
+              } @else if (isICalProvider()) {
+                <input formControlName="calendarId" placeholder="https://calendar.google.com/calendar/ical/XXXX/basic.ics" class="form-input" />
+                <p class="text-body-xs text-secondary mt-1">URL del archivo .ics del calendario. Cada sala debe tener su propia URL.</p>
+              } @else if (isCalDavProvider()) {
+                <input formControlName="calendarId" placeholder="ej: calendars/usuario/sala-reuniones" class="form-input" />
+                <p class="text-body-xs text-secondary mt-1">Ruta relativa desde la URL base configurada en Ajustes > Proveedores.</p>
               } @else {
                 <input formControlName="calendarId" placeholder="ej: sala.atlantico@miempresa.com" class="form-input" />
               }
@@ -142,6 +152,8 @@ export class RoomsPageComponent implements OnInit {
   editingId: string | null = null;
   selectedProvider = signal('Google');
   isLocalProvider = computed(() => this.selectedProvider() === 'Local');
+  isICalProvider = computed(() => this.selectedProvider() === 'ICal');
+  isCalDavProvider = computed(() => this.selectedProvider() === 'CalDav');
 
   form: FormGroup = this.fb.group({
     id: ['', [Validators.required, Validators.maxLength(8), Validators.pattern(/^[A-Za-z0-9]+$/)]],

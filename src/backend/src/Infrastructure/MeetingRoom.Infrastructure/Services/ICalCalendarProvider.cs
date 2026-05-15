@@ -1,4 +1,3 @@
-using System.Net.Http.Json;
 using System.Text;
 using System.Text.Json;
 using MeetingRoom.Core.Domain.Interfaces;
@@ -12,49 +11,34 @@ public class ICalCalendarProvider : ICalendarProvider, IDisposable
 {
     private readonly HttpClient _client = new();
     private readonly IServiceScopeFactory _scopeFactory;
-    private bool _initialized;
-    private string _subscriptionUrl = string.Empty;
 
     public ICalCalendarProvider(IServiceScopeFactory scopeFactory)
     {
         _scopeFactory = scopeFactory;
     }
 
-    public Task InitializeAsync(string credentialsJson, CancellationToken ct = default)
-    {
-        using var doc = JsonDocument.Parse(credentialsJson);
-        var root = doc.RootElement;
-        _subscriptionUrl = root.GetProperty("url").GetString()!;
-        _initialized = true;
-        return Task.CompletedTask;
-    }
+    public Task InitializeAsync(string credentialsJson, CancellationToken ct = default) => Task.CompletedTask;
 
     public async Task<IReadOnlyList<MeetingEvent>> GetEventsAsync(
         string calendarId, DateTimeOffset from, DateTimeOffset to, CancellationToken ct = default)
     {
-        EnsureInitialized();
-
-        var url = string.IsNullOrEmpty(calendarId) ? _subscriptionUrl : calendarId;
-        var ics = await _client.GetStringAsync(url, ct);
+        var ics = await _client.GetStringAsync(calendarId, ct);
         return ParseICalEvents(ics, from, to);
     }
 
     public async Task<MeetingEvent> CreateQuickEventAsync(
         string calendarId, string summary, DateTimeOffset start, int durationMinutes, CancellationToken ct = default)
     {
-        EnsureInitialized();
-
         using var scope = _scopeFactory.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<Persistence.AppDbContext>();
 
-        var subscriptionId = string.IsNullOrEmpty(calendarId) ? _subscriptionUrl : calendarId;
         var end = start.AddMinutes(durationMinutes);
 
         var existing = await db.Set<Core.Domain.Entities.Room>()
-            .FirstOrDefaultAsync(r => r.CalendarId == subscriptionId, ct);
+            .FirstOrDefaultAsync(r => r.CalendarId == calendarId, ct);
 
         var roomId = existing?.Id ?? Guid.NewGuid().ToString("N")[..8];
-        var meeting = new Core.Domain.Entities.LocalMeeting(roomId, summary, "Tablet Kiosko", start, end, subscriptionId);
+        var meeting = new Core.Domain.Entities.LocalMeeting(roomId, summary, "Tablet Kiosko", start, end, calendarId);
 
         db.Set<Core.Domain.Entities.LocalMeeting>().Add(meeting);
         await db.SaveChangesAsync(ct);
@@ -71,12 +55,6 @@ public class ICalCalendarProvider : ICalendarProvider, IDisposable
     }
 
     public void Dispose() => _client.Dispose();
-
-    private void EnsureInitialized()
-    {
-        if (!_initialized)
-            throw new InvalidOperationException("iCal subscription not configured.");
-    }
 
     private static string ExtractLineValue(ReadOnlySpan<char> line, ReadOnlySpan<char> prefix)
     {
