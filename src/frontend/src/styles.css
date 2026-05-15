@@ -447,6 +447,23 @@ input, select, textarea { font: inherit; color: inherit; background: none; borde
 /* ===== Page Header ===== */
 .page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 40px; }
 
+/* ===== Kiosk Config Button ===== */
+.kiosk-config-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 24px;
+  border-radius: 9999px;
+  background: var(--surface-variant);
+  color: var(--text-secondary);
+  transition: all var(--transition);
+  cursor: pointer;
+  border: none;
+  font: inherit;
+  white-space: nowrap;
+}
+.kiosk-config-btn:hover { background: var(--surface-bright); }
+
 /* ===== Responsive ===== */
 @media (min-width: 768px) {
   .md\:grid-cols-2 { grid-template-columns: repeat(2, 1fr); }

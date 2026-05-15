@@ -42,9 +42,9 @@ import { FormsModule } from '@angular/forms';
             <span [class]="'text-caption tracking-wider ' + dotColor(s.status)">{{ statusLabel(s.status) }}</span>
           </div>
           <div style="position:absolute;bottom:48px;left:50%;transform:translateX(-50%);">
-            <button (click)="openAssociateModal()" class="btn-icon" title="Asociar sala" style="width:auto;padding:8px 20px;gap:10px;border-radius:9999px;">
-              <span class="material-symbols-outlined" style="font-size:28px;color:var(--text-secondary);">settings</span>
-              <span class="text-caption" style="color:var(--text-secondary);">Configurar</span>
+            <button (click)="openAssociateModal()" class="kiosk-config-btn">
+              <span class="material-symbols-outlined" style="font-size:24px;">settings</span>
+              <span class="text-caption">Configurar</span>
             </button>
           </div>
         </div>
