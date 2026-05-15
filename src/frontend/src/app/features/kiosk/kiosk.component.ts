@@ -42,8 +42,9 @@ import { FormsModule } from '@angular/forms';
             <span [class]="'text-caption tracking-wider ' + dotColor(s.status)">{{ statusLabel(s.status) }}</span>
           </div>
           <div style="position:absolute;bottom:48px;left:50%;transform:translateX(-50%);">
-            <button (click)="openAssociateModal()" class="p-2 rounded-full transition btn-hover-primary" title="Asociar sala">
-              <span class="material-symbols-outlined opacity-50" style="color:var(--text-secondary);">link</span>
+            <button (click)="openAssociateModal()" class="btn-icon" title="Asociar sala" style="width:auto;padding:8px 20px;gap:10px;border-radius:9999px;">
+              <span class="material-symbols-outlined" style="font-size:28px;color:var(--text-secondary);">settings</span>
+              <span class="text-caption" style="color:var(--text-secondary);">Configurar</span>
             </button>
           </div>
         </div>
@@ -140,7 +141,7 @@ import { FormsModule } from '@angular/forms';
             <div class="not-found-icon"><span class="material-symbols-outlined text-error" style="font-size:56px;">door_back</span></div>
             <h2 class="text-headline-sm mb-3">Sala no encontrada</h2>
             <p class="text-body text-secondary" style="line-height:1.6;">El identificador <span class="text-error text-mono">{{ roomId }}</span> no existe o no está configurado.</p>
-            <button (click)="openAssociateModal()" class="btn btn-primary btn-lg shadow-primary mt-8">Asociar sala</button>
+            <button (click)="openAssociateModal()" class="btn btn-primary btn-lg shadow-primary mt-8"><span class="material-symbols-outlined">link</span> Asociar sala</button>
           </div>
         </div>
       </div>
