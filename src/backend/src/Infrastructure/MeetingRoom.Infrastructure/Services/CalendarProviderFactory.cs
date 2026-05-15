@@ -17,6 +17,7 @@ public class CalendarProviderFactory : ICalendarProviderFactory
         _providers[CalendarProvider.Office365] = new Office365CalendarProvider();
         _providers[CalendarProvider.Zoho] = new ZohoCalendarProvider();
         _providers[CalendarProvider.Local] = new LocalCalendarProvider(scopeFactory);
+        _providers[CalendarProvider.CalDav] = new CalDavCalendarProvider();
     }
 
     public ICalendarProvider GetProvider(CalendarProvider provider) =>
