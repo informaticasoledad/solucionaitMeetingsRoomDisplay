@@ -127,3 +127,85 @@ https://mail.miempresa.com/dav/username/Calendario
 ```
 
 Con la URL base `https://mail.miempresa.com/dav` y el Calendar ID `username/Calendario`.
+
+## Configurar Google Calendar mediante CalDAV
+
+Aunque Google Calendar tiene su propio proveedor nativo en esta aplicación (recomendado), también es posible conectarse a Google Calendar usando el protocolo CalDAV. Esto es útil si prefieres no usar cuentas de servicio de Google Cloud.
+
+### Requisitos previos
+
+- Una cuenta de Google personal o de Google Workspace.
+- Verificación en dos pasos activada en la cuenta de Google.
+- Contraseña de aplicación generada para "CalDAV".
+
+### Paso 1: Activar verificación en dos pasos
+
+1. Ve a [myaccount.google.com/security](https://myaccount.google.com/security).
+2. En **Iniciar sesión en Google**, haz clic en **Verificación en dos pasos**.
+3. Sigue los pasos para activarla si no lo está ya.
+
+### Paso 2: Generar una contraseña de aplicación
+
+1. Ve a [myaccount.google.com/apppasswords](https://myaccount.google.com/apppasswords).
+2. En **Seleccionar aplicación**, elige **Otra (nombre personalizado)**.
+3. Escribe un nombre descriptivo como `MeetingRoomDisplay CalDAV`.
+4. Haz clic en **Generar**.
+5. Copia la contraseña de 16 caracteres que aparece. La necesitarás en el paso 4.
+
+### Paso 3: Obtener el Calendar ID
+
+El Calendar ID de Google es el email asociado al calendario:
+
+- **Calendario personal (principal)**: tu dirección de Gmail (ej: `usuario@gmail.com`).
+- **Calendario secundario**: el email del calendario, que puedes encontrar en Google Calendar:
+  1. Ve a [calendar.google.com](https://calendar.google.com).
+  2. En la barra lateral izquierda, coloca el ratón sobre el calendario que quieras usar.
+  3. Haz clic en los tres puntos `⋯` > **Configuración y uso compartido**.
+  4. En **Integrar calendario**, copia la dirección del **ID del calendario** (tiene formato de email).
+
+### Paso 4: Configurar el JSON de credenciales
+
+La URL base de CalDAV para Google Calendar es:
+
+```
+https://apidata.googleusercontent.com/caldav/v2
+```
+
+El JSON de credenciales debe ser:
+
+```json
+{
+  "url": "https://apidata.googleusercontent.com/caldav/v2",
+  "username": "tu-correo@gmail.com",
+  "password": "xxxx-xxxx-xxxx-xxxx"
+}
+```
+
+Donde:
+- `username`: tu dirección de Gmail o, si usas Google Workspace, `tu-usuario@tu-dominio.com`.
+- `password`: la contraseña de aplicación generada en el paso 2.
+
+### Paso 5: Configurar la sala
+
+1. Ve a **Salas** en el panel de administración.
+2. Crea o edita una sala.
+3. Selecciona **CalDAV (Nextcloud, iCloud, …)** como proveedor.
+4. En **Calendar ID**, introduce el email del calendario de Google (ej: `usuario@gmail.com` o `calendario-secundario@group.calendar.google.com`).
+5. Guarda la sala.
+6. Ve a **Ajustes > Proveedores de calendario**, selecciona **CalDAV** y pega el JSON de credenciales.
+
+### Notas importantes
+
+- Google Calendar vía CalDAV es **solo lectura** para la creación de eventos por parte de esta aplicación. Google restringe la escritura vía CalDAV a clientes propios. Para tener funcionalidad completa (lectura y escritura), usa el proveedor nativo **Google Calendar** de esta aplicación.
+- Si solo necesitas consultar eventos del calendario y no crear reservas desde el kiosko, CalDAV con Google Calendar funciona correctamente.
+- El endpoint CalDAV de Google está oficialmente en modo mantenimiento y podría dejar de funcionar en el futuro. Se recomienda migrar eventualmente al proveedor nativo de Google Calendar.
+
+### Solución de problemas específicos de Google Calendar
+
+| Error                              | Solución posible                                                   |
+|------------------------------------|--------------------------------------------------------------------|
+| Error HTTP 401 (No autorizado)     | Verifica que la contraseña de aplicación sea correcta. Genera una nueva si es necesario. |
+| Error HTTP 403 (Prohibido)         | Puede indicar que el Calendar ID no existe o la cuenta no tiene acceso a ese calendario. |
+| No aparecen eventos                | Asegúrate de que el calendario es público o que la cuenta tiene permisos de lectura. |
+| No se crean eventos                | Google bloquea la creación de eventos vía CalDAV desde clientes de terceros. Usa el proveedor nativo Google Calendar. |
+| La contraseña de aplicación expiró | Las contraseñas de aplicación de Google caducan si no se usan. Genera una nueva desde [myaccount.google.com/apppasswords](https://myaccount.google.com/apppasswords). |
