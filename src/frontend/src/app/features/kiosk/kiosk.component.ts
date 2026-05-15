@@ -2,6 +2,7 @@ import { Component, signal, computed, OnDestroy, inject } from '@angular/core';
 import { ActivatedRoute } from '@angular/router';
 import { RoomsService } from '../../core/services/rooms.service';
 import { RoomStatus } from '../../core/models/room-status.model';
+import { Room } from '../../core/models/room.model';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 
@@ -215,29 +216,25 @@ import { FormsModule } from '@angular/forms';
 
           @if (associateStep() === 'room') {
             <div class="flex flex-col gap-xl">
-              <p class="text-body text-secondary" style="line-height:1.6;">Introduce el identificador de la sala que quieres vincular a este kiosko.</p>
+              <p class="text-body text-secondary" style="line-height:1.6;">Selecciona la sala que quieres vincular a este kiosko.</p>
               <div>
-                <label class="form-label">ID de la sala</label>
-                <div class="relative">
-                  <span class="form-input-icon material-symbols-outlined">meeting_room</span>
-                  <input
-                    type="text"
-                    [(ngModel)]="roomIdInput"
-                    placeholder="Ej: sala-reuniones-1"
-                    class="form-input form-input-pl"
-                    (keyup.enter)="submitRoomId()"
-                  >
+                <label class="form-label">Sala</label>
+                <div class="select-wrapper">
+                  <select [(ngModel)]="selectedRoomId" class="form-input">
+                    <option value="" disabled class="bg-surface-high" [hidden]="selectedRoomId()">Selecciona una sala...</option>
+                    @for (room of availableRooms(); track room.id) {
+                      <option [value]="room.id" class="bg-surface-high">{{ room.name }} ({{ room.id }})</option>
+                    }
+                  </select>
+                  <span class="material-symbols-outlined">unfold_more</span>
                 </div>
               </div>
-              @if (roomError()) { <p class="text-body-sm text-error text-center">{{ roomError() }}</p> }
-              @if (roomValidating()) {
-                <p class="text-body-sm text-secondary text-center flex items-center justify-center gap">
-                  <span class="material-symbols-outlined animate-spin">progress_activity</span> Verificando sala…
-                </p>
+              @if (availableRooms().length === 0) {
+                <p class="text-body-sm text-secondary text-center">Cargando salas disponibles...</p>
               }
               <div class="flex gap pt-4">
                 <button (click)="closeAssociateModal()" class="btn btn-ghost flex-1">Cancelar</button>
-                <button (click)="submitRoomId()" [disabled]="!roomIdInput.trim() || roomValidating()" class="btn btn-primary flex-1 shadow-primary">
+                <button (click)="submitRoomId()" [disabled]="!selectedRoomId()" class="btn btn-primary flex-1 shadow-primary">
                   <span class="material-symbols-outlined">check</span> Vincular sala
                 </button>
               </div>
@@ -272,12 +269,10 @@ export class KioskComponent implements OnDestroy {
   showAssociateModal = false;
   associateStep = signal<'pin' | 'room' | 'success'>('pin');
   pinInput = '';
-  roomIdInput = '';
   pinError = signal('');
-  roomError = signal('');
   pinValidating = signal(false);
-  roomValidating = signal(false);
-  private validatedPin = '';
+  selectedRoomId = signal('');
+  availableRooms = signal<Room[]>([]);
 
   hourAngle = computed(() => ((this.now().getHours() % 12) * 30) + (this.now().getMinutes() * 0.5));
   minuteAngle = computed(() => this.now().getMinutes() * 6);
@@ -395,12 +390,11 @@ export class KioskComponent implements OnDestroy {
     this.showAssociateModal = true;
     this.associateStep.set('pin');
     this.pinInput = '';
-    this.roomIdInput = '';
     this.pinError.set('');
-    this.roomError.set('');
     this.pinValidating.set(false);
-    this.roomValidating.set(false);
-    this.validatedPin = '';
+    this.selectedRoomId.set('');
+    this.availableRooms.set([]);
+    this.roomsService.loadRooms().subscribe(r => this.availableRooms.set(r));
   }
 
   closeAssociateModal() {
@@ -422,7 +416,6 @@ export class KioskComponent implements OnDestroy {
     this.roomsService.validatePin(this.pinInput).subscribe({
       next: () => {
         this.pinValidating.set(false);
-        this.validatedPin = this.pinInput;
         this.associateStep.set('room');
         this.pinError.set('');
       },
@@ -434,31 +427,12 @@ export class KioskComponent implements OnDestroy {
   }
 
   submitRoomId() {
-    const id = this.roomIdInput.trim();
-    if (!id || !this.validatedPin) return;
+    const id = this.selectedRoomId();
+    if (!id) return;
 
-    this.roomError.set('');
-    this.roomValidating.set(true);
-
-    this.roomsService.validateRoom(this.validatedPin, id).subscribe({
-      next: () => {
-        this.roomValidating.set(false);
-        localStorage.setItem('kioskRoomId', id);
-        this.roomId = id;
-        this.associateStep.set('success');
-      },
-      error: (err) => {
-        this.roomValidating.set(false);
-        if (err.status === 404) {
-          this.roomError.set('No se encontró ninguna sala con ese ID.');
-        } else if (err.status === 401) {
-          this.roomError.set('PIN no válido. Vuelve a intentarlo.');
-          this.associateStep.set('pin');
-        } else {
-          this.roomError.set('Error al verificar la sala. Inténtalo de nuevo.');
-        }
-      }
-    });
+    localStorage.setItem('kioskRoomId', id);
+    this.roomId = id;
+    this.associateStep.set('success');
   }
 
   ngOnDestroy() { clearInterval(this.clockTimer); clearInterval(this.pollTimer); }
